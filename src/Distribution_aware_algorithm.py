@@ -21,10 +21,10 @@ BINS = 50          #Tulpade arv histogrammis
 debug = False      #Debug
 
 #Mangufaasid
-PREFLOP = 0  # 0 community cards
-FLOP = 3     # 3 community cards
-TURN = 4     # 4 community cards
-RIVER = 5    # 5 community cards
+PREFLOP = 0  # 0 comm kaarte
+FLOP = 3     # 3 comm kaarte
+TURN = 4     # 4 comm kaarte
+RIVER = 5    # 5 comm kaarte
 
 def card_string_to_int(card_string):
     """Kaardi string integeriks"""
@@ -109,13 +109,13 @@ def calculate_equity_distribution(player_cards, list_deck, community_cards_str=N
             print(f"Warning: More community cards provided ({len(fixed_community)}) than game state allows ({game_state})")
             fixed_community = fixed_community[:game_state]
     
-    #Kaardipaki koopia paralleli jaoks (parallel on multithreading lib pythonis)
+    #Kaardipaki koopia multithreadingu jaoks
     deck_copies = []
     for i in range(trials):
         deck_copy = list_deck.copy()
         deck_copies.append(deck_copy)
     
-    #parllell
+    #multithreading
     process_trial = partial(
         process_single_trial,
         player_cards=player_cards,
@@ -148,7 +148,7 @@ def plot_equity_histogram(equity_values, player_cards, community_cards, game_sta
     #Vaartused 
     x_ticks = np.linspace(0, 1, 21)  # 0.0, 0.05, 0.10, ..., 1.0
     
-    # Create histogram - normalized to show probability mass instead of frequency
+    # Loo histogrm
     counts, edges, patches = plt.hist(equity_values, bins=bins, density=True, alpha=0.7, 
                                      color='blue', edgecolor='black', label='Probability Mass')
     
@@ -157,8 +157,10 @@ def plot_equity_histogram(equity_values, player_cards, community_cards, game_sta
     
     if len(equity_values) > 3:
         x = np.linspace(0, 1, 1000)
-        #kde = gaussian_kde(equity_values)
-        #plt.plot(x, kde(x), 'r-', linewidth=2, label='Distribution')
+        """monikord annab erroreid, kui testida kindlate comm kaartidega, 
+        kui jargmised kaks line valja commentida parandab see koik ara"""
+        kde = gaussian_kde(equity_values)
+        plt.plot(x, kde(x), 'r-', linewidth=2, label='Distribution')
     
     #Statt
     mean_equity = np.mean(equity_values)
@@ -196,7 +198,7 @@ def plot_equity_histogram(equity_values, player_cards, community_cards, game_sta
                   f"Max: {max(equity_values):.1%}\n"
                   f"Samples: {len(equity_values)}")
     
-    # Create a custom legend with stats
+    # Custom legend
     legend_elements = [
         Patch(facecolor='blue', edgecolor='black', alpha=0.7, label='Probability Mass'),
         plt.Line2D([0], [0], color='r', lw=2, label='Distribution'),
@@ -204,10 +206,8 @@ def plot_equity_histogram(equity_values, player_cards, community_cards, game_sta
         plt.Line2D([0], [0], color='purple', lw=2, linestyle='dotted', label=f'Median: {median_equity:.1%}')
     ]
     
-    # Position legend and stats box in the upper right corner
+    #  Legendi ja custom legendi xy pos
     plt.legend(handles=legend_elements, loc='upper right', fontsize=10)
-    
-    # Add stats text box next to the legend
     plt.figtext(0.71, 0.71, stats_text, bbox=dict(facecolor='white', edgecolor='gray', alpha=0.8, boxstyle='round,pad=0.5'), fontsize=10)
     
     plt.tight_layout()
@@ -230,7 +230,7 @@ def User_input():
         else:
             print("Invalid input, using random cards instead.")
     
-    # Generate player cards and deck
+    # Gene kaardid ja kaardipakk
     player_cards, available_deck = generate_initial_cards(player_cards_str)
     print(f"Player cards: {[Card.int_to_str(c) for c in player_cards]}")
     
@@ -241,7 +241,6 @@ def User_input():
     print("3. Turn (4 community cards)")
     print("4. River (5 community cards)")
     
-
     game_state_map = {
         "1": PREFLOP,
         "preflop": PREFLOP,
@@ -254,7 +253,8 @@ def User_input():
     }
     game_state_choice = input("> ").lower()
     game_state = game_state_map.get(game_state_choice, RIVER)
-    
+        
+    #string formatting
     game_state_names = {
     PREFLOP: "Preflop",
     FLOP: "Flop",
@@ -287,14 +287,7 @@ def User_input():
     bins = int(input("Number of histogram bins (default 50): ") or "50")
     
     #Calc
-    equity_values, fixed_community = calculate_equity_distribution(
-        player_cards, 
-        available_deck, 
-        community_cards_str, 
-        game_state,
-        trials,
-        iterations
-    )
+    equity_values, fixed_community = calculate_equity_distribution( player_cards, available_deck, community_cards_str, game_state,trials, iterations)
     
     # Plot results
     mean, median = plot_equity_histogram(equity_values, player_cards, fixed_community, game_state, bins)
@@ -302,8 +295,8 @@ def User_input():
     print(f"Average equity: {mean:.2%}")
     return equity_values
 
+
 """main"""
 if __name__ == "__main__":
-
     User_input()  # Interactive mode
 
